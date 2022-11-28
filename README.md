@@ -60,6 +60,8 @@ As colunas do conjunto de dados acima representam informações relativas à:
 * bath: Quantidade de banheiros presentes no imóvel
 * price: Preço do imóvel 
 
+* Dados Nulos:
+
 Após isto, verifiquei a quantidade de dados ausentes no conjunto de dados com o método .isnull().sum() do Pandas:
 
 ```
@@ -71,4 +73,45 @@ price          0
 dtype: int64
 ```
 
-Acima é observável que há 73 linhas com dados 
+Acima é observável que há 73 linhas com dados ausentes na coluna 'bath' relativo à quantidade de banheiro presentes no imóvel, e há 16 linhas com dados ausentes na coluna 'size' relativo à quantidade de quartos de cada imóvel.
+
+Como são poucos dados nulos, decidi exclui-los para ter um conjunto de dados menor e consequentemente prosseguir com o tratamento, poderia ter usado outras técnicas para lidar com dados nulos sem perder informações adicionais, mas considero que está foi a melhor decisão à ser tomada:
+
+```
+df_3 = df_2.dropna()
+```
+
+Com o método .dropna() aplicado acima, obtive um conjunto de dados menor com 13 mil e 246 linhas.
+
+Concluído o tratamento de dados nulos, comecei a lidar com às variáveis do dataset que eram do tipo categórica e estavam em formato textual.
+
+* Conversão de tipo de dados:
+
+A coluna 'size' representa a quantidade de quartos de cada imóvel, porém o tipo de dados da coluna era do tipo object (texto) e tal coluna continha letras presentes em seus valores.
+
+O método .unique() me trouxe a informação sobre os valores únicos da coluna 'size':
+
+```
+['2 BHK', '4 Bedroom', '3 BHK', '4 BHK', '6 Bedroom', '3 Bedroom',
+       '1 BHK', '1 RK', '1 Bedroom', '8 Bedroom', '2 Bedroom',
+       '7 Bedroom', '5 BHK', '7 BHK', '6 BHK', '5 Bedroom', '11 BHK',
+       '9 BHK', '9 Bedroom', '27 BHK', '10 Bedroom', '11 Bedroom',
+       '10 BHK', '19 BHK', '16 BHK', '43 Bedroom', '14 BHK', '8 BHK',
+       '12 Bedroom', '13 BHK', '18 Bedroom']
+```
+É vísivel que não há como converter o tipo de dados da coluna 'size' de object para int, sem antes excluir os elementos textuais que estão presentes nos dados de tal coluna, então para excluir às letras contidas nos dados e deixar somente os números que representam a quantidade de quartos dos imóveis, construí uma função que iria manter somente os números e iria excluir todas às letras que estavam presentes na coluna 'size':
+
+```
+# Conversão da coluna 'size' de tipo textual (object) para tipo numérico (int):
+
+df_3['bhk'] = df_3['size'].apply(lambda x : int(x.split(' ')[0]))
+```
+
+Além de ter mantido somente os números de cada dado da coluna 'size', aproveitei para converter o tipo de dado da coluna de tipo object (texto) para tipo int (numérico), para que pudesse ter tal coluna preparada para ser implementada no modelo de machine learning.
+
+Apliquei novamente o método .unique() para ver o resultado da função .apply() aplicada na coluna 'size':
+
+```
+[ 2,  4,  3,  6,  1,  8,  7,  5, 11,  9, 27, 10, 19, 16, 43, 14, 12,
+       13, 18]
+  ```
