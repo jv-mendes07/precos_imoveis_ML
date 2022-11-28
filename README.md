@@ -115,3 +115,82 @@ Apliquei novamente o método .unique() para ver o resultado da função .apply()
 [ 2,  4,  3,  6,  1,  8,  7,  5, 11,  9, 27, 10, 19, 16, 43, 14, 12,
        13, 18]
   ```
+Após tal conversão da coluna 'size', fui verificar os valores únicos da coluna 'total_sqtf' com o método .unique(), e vi que tal coluna é do tipo object, e que há dados textuais na coluna que impedem a coluna de ser convertida diretamente de object para int:
+
+```
+['1056', '2600', '1440', ..., '1133 - 1384', '774', '4689']
+```
+O traço '-' em um dos dados da coluna foi um dos impecilhos que tive que lidar para transformar essa coluna do tipo texto para o tipo numérico.
+
+Com isto, construí uma função pythônica com o objetivo de filtras os dados da coluna 'total_sqtf' que seriam impedidos de ser convertidos para o tipo numérico por conterem aquele '-' ou por conterem letras que impedissem tal conversão:
+
+```
+# Função para converter os valores da coluna 'total_sqft' de tipo texto (object) para tipo numérico com casa decimal (float):
+
+def is_float(x):
+  try:
+    float(x)
+  except:
+    return False
+  return True
+ ```
+ 
+A função acima tenta converter o dado para o tipo float (número decimal), caso a função não consiga, então a função retorna False (0), caso contrário retorna True (1).
+
+Usei tal função construída para filtrar os dados da coluna 'total_sqft' que não poderiam ser convertidas diretamente de object para float:
+
+```
+# Filtro de todos os valores da coluna 'total_sqft' que não são conversíveis para tipo float,
+# por conterem caracteres não-numéricos:
+
+df_3[~df_3.total_sqft.apply(is_float)].head(10)
+```
+
+Vi que há 190 dados de tal coluna que não poderiam ser convertido de object para floa diretamente, verifique algumas poucas linhas abaixo da aplicação de tal filtro:
+
+|     |           location |  size |  total_sqft | bath |   price | bhk |
+|-----|-------------------:|------:|------------:|-----:|--------:|----:|
+|  30 |          Yelahanka | 4 BHK | 2100 - 2850 |  4.0 | 186.000 |   4 |
+| 122 |             Hebbal | 4 BHK | 3067 - 8156 |  4.0 | 477.000 |   4 |
+| 137 | 8th Phase JP Nagar | 2 BHK | 1042 - 1105 |  2.0 |  54.005 |   2 |
+| 165 |           Sarjapur | 2 BHK | 1145 - 1340 |  2.0 |  43.490 |   2 |
+| 188 |           KR Puram | 2 BHK | 1015 - 1540 |  2.0 |  56.800 |   2 |
+
+Para retirar os traços de tais dados e deixar somente um valor numérico, decidi calcular a média entre os dois números do lado de cada traço para poder excluir o traço e manter um valor aproximado em relação à área em pés quadrados destes imóveis.
+
+Para este fim, construí mais uma função pythônica:
+
+```
+# Função para retirar a média de área em pés quadrados de valores que apresentam um intervalo numérico e aproximado,
+# além de tal função converter tais elementos da coluna 'total_sqft' para o tipo float:
+
+def convert_sqft_to_num(x):
+  tokens = x.split('-')
+  if len(tokens) == 2:
+    return (float(tokens[0]) + float(tokens[1])) / 2
+  try:
+    return float(x)
+  except:
+    return None
+ ```
+A função acima separa cada dado com base no traço '-', e assim verifica se esse dado contêm dois valores (que seriam os dois números separados pelo traço), e se tal dado contêm dois valores, então tal função irá retornar a média entre esses dois valores.
+
+Caso o dado não contenha dois valores, então a função irá converter diretamente o valor para o tipo float (número decimal).
+
+Um exemplo de aplicação da função construída seria:
+
+```
+# Teste da função para retirar a média de elemento que apresenta um valor estimado e aproximado da área em pés quadrados dentro de um intervalo:
+
+convert_sqft_to_num('2100 - 2850')
+```
+A função acima retornaria 2475.0 que é a média entre 2100 e 2850.
+
+Após o teste de tal função, apliquei-a sobre a coluna 'total_sqft' para converter todos os dados da coluna diretamente de object para float, e assim termos mais uma coluna preparada para a implementação do modelo de regressão.
+
+```
+# Aplicação da função para converter todos os valores da coluna 'total_sqft' de texto para tipo flutuante (float):
+
+df_4['total_sqft'] = df_4['total_sqft'].apply(convert_sqft_to_num)
+```
+
