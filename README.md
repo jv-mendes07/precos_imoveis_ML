@@ -262,3 +262,25 @@ Assim, após tal transformação, consegui diminuir a quantidade de localizaçõ
 
 Neste caso, ao transformar a coluna 'localization' em variável dummy, terei somente 242 colunas adicionais ao invés das 1.304 que seriam tidas.
 
+* **Tratamento de outliers**:
+
+Nessa última fase do tratamento de dados, decidi usar algumas técnicas e avaliar algumas colunas do dataset para saber se há dados atípicos (outliers) em tais colunas ou não.
+
+De início, adicionei uma coluna no dataset que informasse o preço em rupee (moeda indiana) por pé quadrado de cada imóvel de Bangalores, para que posteriormente pudesse identificar valores extremos e assim exclui-los.
+
+```
+# Criação da coluna de preço por pés quadrados para verificarmos posteriormente outliers (valores atípicos) e eliminarmos:
+
+df_5 = df_5.assign(price_per_sqft = df_5['price'] * 100000 / df_5['total_sqft'])
+```
+
+Após a criação de tal coluna, filtrei imóveis no dataset que tivessem quartos com uma área menor de 300 pés quadrados, por considerar que tais imóveis poderiam ter quartos com uma área pequena e incomum em relação ao tamanho convencional de quartos dos de mais imóveis.
+
+```
+# Identificação de imóveis que contêm quartos com menos de 300 pés quadrados:
+
+df_5[df_5.total_sqft / df_5.bhk < 300].head()
+```
+
+Por conseguinte, atribuí à uma nova variável somente imóveis que contêm uma área de 300 ou mais pés quadrados por quarto, e assim exclui os imóveis com menos de 300 pés quadrados por quarto por considerar tais imóveis como imóveis com áreas pequenas ou imóveis com dados extremos e atípicos em relação aos outros imóveis.
+
