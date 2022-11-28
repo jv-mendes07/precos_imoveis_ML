@@ -60,9 +60,9 @@ As colunas do conjunto de dados acima representam informações relativas à:
 * bath: Quantidade de banheiros presentes no imóvel
 * price: Preço do imóvel 
 
-* **Dados Nulos**:
-
 Após isto, verifiquei a quantidade de dados ausentes no conjunto de dados com o método .isnull().sum() do Pandas:
+
+* **Dados Nulos**:
 
 ```
 location       1
@@ -240,6 +240,25 @@ Name: location, Length: 1293, dtype: int64
 
 len(location_stats[location_stats <= 10])
 ```
-Como saída, obtive que há 1052 localizações em Bangalore que há 10 ou menos imóveis presentes.
+Como saída, obtive que há 1.052 localizações em Bangalore que há 10 ou menos imóveis presentes.
 
+Com tal informações, filtrei as localizações que contêm 10 ou menos imóveis presentes e os atribuí à uma nova variável:
+
+```
+# Atribuição de tais localizações com menos de 10 imóveis à uma nova variável:
+
+location_stats_less_than_10 = location_stats[location_stats <= 10]
+```
+Com tais localizações atribuídas à uma nova variável, decidi substituir cada nome de localização por 'outro', caso tal localização esteja inserida na lista de localizações com 10 ou menos imóveis presentes, ou seja, apliquei essa função abaixo sobre a coluna 'localization':
+
+```
+# Aplicação de função para substituir os nomes das localizações com menos de 10 imóveis à uma mesma classe, denominada 'outros':
+
+df_5.location = df_5.location.apply(lambda x : 'other' if x in location_stats_less_than_10 else x)
+```
+Caso os nomes de localização da coluna 'localization' estejam inseridos na lista com 10 ou menos imóveis, então os nomes de tais localizações serão substituídos por 'outro' para que todas essas 1.052 localizações diferentes estejam atribuídas à uma mesma classe em comum.
+
+Assim, após tal transformação, consegui diminuir a quantidade de localizações diferentes de 1.304 para 242 localizações.
+
+Neste caso, ao transformar a coluna 'localization' em variável dummy, terei somente 242 colunas adicionais ao invés das 1.304 que seriam tidas.
 
