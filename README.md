@@ -60,7 +60,7 @@ As colunas do conjunto de dados acima representam informações relativas à:
 * bath: Quantidade de banheiros presentes no imóvel
 * price: Preço do imóvel 
 
-* Dados Nulos:
+* **Dados Nulos**:
 
 Após isto, verifiquei a quantidade de dados ausentes no conjunto de dados com o método .isnull().sum() do Pandas:
 
@@ -85,7 +85,7 @@ Com o método .dropna() aplicado acima, obtive um conjunto de dados menor com 13
 
 Concluído o tratamento de dados nulos, comecei a lidar com às variáveis do dataset que eram do tipo categórica e estavam em formato textual.
 
-* Conversão de tipo de dados:
+* **Conversão de tipo de dados**:
 
 A coluna 'size' representa a quantidade de quartos de cada imóvel, porém o tipo de dados da coluna era do tipo object (texto) e tal coluna continha letras presentes em seus valores.
 
@@ -186,11 +186,60 @@ convert_sqft_to_num('2100 - 2850')
 ```
 A função acima retornaria 2475.0 que é a média entre 2100 e 2850.
 
-Após o teste de tal função, apliquei-a sobre a coluna 'total_sqft' para converter todos os dados da coluna diretamente de object para float, e assim termos mais uma coluna preparada para a implementação do modelo de regressão.
+Após o teste de tal função, apliquei-a sobre a coluna 'total_sqft' para converter todos os dados da coluna diretamente de object para float, e assim consegui ter mais uma coluna preparada para a implementação do modelo de regressão.
 
 ```
 # Aplicação da função para converter todos os valores da coluna 'total_sqft' de texto para tipo flutuante (float):
 
 df_4['total_sqft'] = df_4['total_sqft'].apply(convert_sqft_to_num)
 ```
+* **Redução de dimensionalidade**:
+
+Nesta frase de tratamento dos dados, vi que precisava converter a coluna 'localization' de texto para número inteiro, e para fazer isto teria que usar variáveis dummy para converter cada nome de localização da coluna 'localization' em uma coluna numérica de 0's e 1's que iria ter 1 para afirmar quando um imóvel estaria presente em tal localização, e 0 para negar que tal imóvel estivesse presente em tal localização.
+
+No entanto, para realizar tal transformação, tive que verificar a quantidade de valores únicos na coluna 'localization', isto é, a quantidade de localizações diferentes em que os imóveis de Bangalore estão localizados.
+
+```
+# Quantidade de valores únicos de localizações que contêm imóveis registrados em Bangalore, Índia:
+
+len(df_5.location.unique())
+```
+O método len de Python me trouxe o resultado de que há 1.304 localizações diferentes em Bangalore com imóveis presentes, e neste caso se fosse criado uma variável dummy para cada localização, iria acabar tendo 1.304 colunas adicionais no conjunto de dados, ou seja, teríamos mais peso informacional para a análise e consequentemente o modelo de regressão poderia demorar mais tempo para ser treinado e para realizar previsões sobre o preço dos imóveis.
+
+Para evitar esse número exagerado de colunas adicionais, resolvi saber quais eram as localizações que continham mais imóveis e quais que continham menos imóveis em Bangalore.
+
+Usei o método .groupby de Pandas para saber a quantidade de imóveis presentes por localização em Bangalore:
+
+```
+# Agrupamento da quantidade de imóveis por localização presentes em Bangalore:
+
+location_stats = df_5.groupby('location')['location'].agg('count').sort_values(ascending = False)
+```
+Abaixo está uma visualização breve da quantidade de imóveis por localização:
+
+```
+location
+Whitefield               535
+Sarjapur  Road           392
+Electronic City          304
+Kanakpura Road           266
+Thanisandra              236
+                        ... 
+1 Giri Nagar               1
+Kanakapura Road,           1
+Kanakapura main  Road      1
+Karnataka Shabarimala      1
+whitefiled                 1
+Name: location, Length: 1293, dtype: int64
+```
+
+É notável que há localizações em Bangalore que contém somente um imóvel presente, após tal notação, decidi saber a quantidade de localizações na cidade indiana que há menos de 10 imóveis presentes:
+
+```
+# Quantidade de localizações que contêm menos de 10 imóveis:
+
+len(location_stats[location_stats <= 10])
+```
+Como saída, obtive que há 1052 localizações em Bangalore que há 10 ou menos imóveis presentes.
+
 
