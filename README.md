@@ -284,3 +284,45 @@ df_5[df_5.total_sqft / df_5.bhk < 300].head()
 
 Por conseguinte, atribuí à uma nova variável somente imóveis que contêm uma área de 300 ou mais pés quadrados por quarto, e assim exclui os imóveis com menos de 300 pés quadrados por quarto por considerar tais imóveis como imóveis com áreas pequenas ou imóveis com dados extremos e atípicos em relação aos outros imóveis.
 
+Depois disto, criei uma função para excluir todos os dados que têm preços por pés quadrados abaixo de um desvio-padrão para baixo e preços por pés quadrados que estão acima de um desvio-padrão para cima, em outras palavras criei uma função para excluir dados extremos e manter somente 63 % dos dados que estão concentrados e próximos em relação às medidas centrais (média, moda, mediana).
+
+```
+# Função para excluir imóveis que contenham preços por pés quadrados considerados outliers (valores extremos):
+
+def remove_pps_outliers(df):
+    df_out = pd.DataFrame()
+    for key, subdf in df.groupby('location'):
+        m = np.mean(subdf.price_per_sqft)
+        st = np.std(subdf.price_per_sqft)
+        reduced_df = subdf[(subdf.price_per_sqft > (m-st)) & (subdf.price_per_sqft <= (m+st))]
+        df_out = pd.concat([df_out, reduced_df], ignore_index = True)
+    return df_out
+        
+df_7 = remove_pps_outliers(df_6)
+df_7.shape
+```
+Após a criação e aplicação de tal função para excluir valores extremos, obtive um dataset mais reduzido de 10 mil e 241 linhas.
+
+Em continuação para identificar mais outliers, decidi plotar alguns gráficos de dispersão para identificar imóveis que tivessem 3 quartos e fossem mais baratos do que imóveis de 2 quartos, por considerar que o preço de um imóvel está correlacionado também com sua quantidade de cômodos.
+
+```
+# Função para plotar um gráfico de dispersão que expresse visualmente o preço de cada imóvel pela área total em pés quadrados, para imóveis
+# com 2 e 3 quartos:
+
+def plot_scatter_chart(df, location):
+    bhk2 = df[(df.location == location) & (df.bhk == 2)]
+    bhk3 = df[(df.location == location) & (df.bhk == 3)]
+    matplotlib.rcParams['figure.figsize'] = (12, 5)
+    plt.scatter(bhk2.total_sqft, bhk2.price, color = 'blue', label = '2 BHK',
+               s = 50)
+    plt.scatter(bhk3.total_sqft, bhk3.price, color = 'green', label = '3 BHK',
+               s = 50, marker = '+')
+    plt.xlabel('Total Square Feet Area')
+    plt.ylabel('Price')
+    plt.title(location)
+    plt.legend()
+    
+plot_scatter_chart(df_7, 'Rajaji Nagar')
+```
+Acima é vísivel que criei uma função para plotar gráficos de imóveis de um determinado local que pudesse ser especificado como parâmetro da função, junto com um gráfico de dispersão que expusse o preço dos imóveis de tal local divido por imóveis que contêm 2 e 3 quartos.
+
