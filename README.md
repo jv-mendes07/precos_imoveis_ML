@@ -373,4 +373,10 @@ Concluída a exclusão de outliers, plotei novamente os gráficos para ver o pre
 
 Como é observado nos dois gráficos acima, excluí os imóveis de 3 quartos que eram mais baratos do que os imóveis de 2 quartos por considerar tais preços de imóveis como valores incomuns com base na quantidade de cômodos.
 
+Por conseguinte, fiz um histograma para visualizar a frequência de imóveis com base no preço por pés quadrado:
+
+![](./img/gra_4.png)
+
+Neste gráfico acima é observado que majoritariamente há mais imóveis com 5000 rupees por pés quadrados, enquanto em contrapartida há uma diminuição de imóveis conforme o preço por pés quadrados aumenta.
+
 
