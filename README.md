@@ -321,8 +321,56 @@ def plot_scatter_chart(df, location):
     plt.ylabel('Price')
     plt.title(location)
     plt.legend()
-    
-plot_scatter_chart(df_7, 'Rajaji Nagar')
 ```
-Acima é vísivel que criei uma função para plotar gráficos de imóveis de um determinado local que pudesse ser especificado como parâmetro da função, junto com um gráfico de dispersão que expusse o preço dos imóveis de tal local divido por imóveis que contêm 2 e 3 quartos.
+Acima é vísivel que criei uma função para plotar gráficos de imóveis de um determinado local que pudesse ser especificado como parâmetro da função, junto com um gráfico de dispersão que expusesse o preço dos imóveis de tal local que contessem somente 2 e 3 quartos.
+
+Apliquei está função para saber o preço dos imóveis de Rajaji Nagar que contêm 2 ou 3 quartos:
+
+![](./img/gra_1.png)
+
+No gráfico acima, observamos que há alguns imóveis com 2 quartos que são mais caros do que imóveis de 3 quartos.
+
+Apliquei a mesma função para obter um gráfico de dispersão relativo aos imóveis localizados no Hebbal:
+
+![](./img/gra_2.png)
+
+Novamente, é observável que há alguns imóveis de 2 quartos mais caros em comparação à imóveis de 3 quartos.
+
+Após identificar esses dados consideravelmente atípicos, decide excluir os imóveis que contêm 3 quartos e são mais baratos do que imóveis de 2 quartos de todos os locais de Bangalore.
+
+Usei uma função pythônica para a exclusão de tais outliers:
+
+```
+# Função para excluir imóveis que tenham mais quartos e sejam mais baratos do que imóveis com menos quartos e mais caros:
+
+def remove_bhk_outliers(df):
+    exclude_indices = np.array([])
+    for location, location_df in df.groupby('location'):
+        bhk_stats = {}
+        for bhk, bhk_df in location_df.groupby('bhk'):
+            bhk_stats[bhk] = {
+                'mean': np.mean(bhk_df.price_per_sqft),
+                'std': np.std(bhk_df.price_per_sqft),
+                'count': bhk_df.shape[0]
+            }
+        for bhk, bhk_df in location_df.groupby('bhk'):
+            stats = bhk_stats.get(bhk-1)
+            if stats and stats['count']>5:
+                exclude_indices = np.append(exclude_indices, bhk_df[bhk_df.price_per_sqft<(stats['mean'])].index.values)
+    return df.drop(exclude_indices,axis='index')
+
+df_8 = remove_bhk_outliers(df_7)
+df_8.shape
+```
+
+Após aplicar tal função sobre o dataset, obtive um conjunto de dados mais reduzido de 7 mil e 329 linhas.
+
+Concluída a exclusão de outliers, plotei novamente os gráficos para ver o preço dos imóveis de 2 e 3 quartos após a exclusão de tais valores atípicos:
+
+![](./img/gra_3.png)
+
+![](./img/gra_6.png)
+
+Como é observado nos dois gráficos acima, excluí os imóveis de 3 quartos que eram mais baratos do que os imóveis de 2 quartos por considerar tais preços de imóveis como valores incomuns com base na quantidade de cômodos.
+
 
