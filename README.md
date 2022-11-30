@@ -7,7 +7,7 @@ Durante o projeto, realizei dois passos sequenciais, que foram **(1)** tratament
 
 Já na **(2)** fase construí um modelo de machine learning, isto é, importei o modelo de regressão linear, dividi o conjunto de dados tratado entre dados de treino e dados de teste, e consequentemente treinei o modelo, para depois ter uma análise do quão eficaz era o modelo em realizar previsões sobre o preço dos imóveis, após isto, repeti este mesmo processo repetidas vezes, assim, usei outros modelos de regressão, junto com algumas técnicas como validação cruzada e GridSearch, para saber quais eram os melhores modelos e quais eram os melhores parâmetros dos modelos para realizar previsões mais precisas e acuradas.
 
-### Importação das bibliotecas:
+## Importação das bibliotecas:
 
 Para este projeto, utilizei Pandas e Numpy para manipulação dos dados, Matplotlib e Seaborn foram usados para visualização de dados, e Sklearn foi a biblioteca útil para a construção do modelo de machine learning.
 
@@ -34,7 +34,7 @@ Após a importação de tais bibliotecas, importei o conjunto de dados e verifiq
 
 Nem todas às colunas do dataset foram usadas para prever o preço dos imóveis, além de que antes de construir o modelo de regressão é necessário converter dados textuais em dados numéricos, e principalmente é indispensável lidar com dados ausentes e outliers para não ter erros na construção do modelo preditivo, à partir deste ponto comecei a fase de tratamento e limpeza de dados:
 
-### Tratamento de dados:
+## Tratamento de dados:
 
 Primeiramente, exclui algumas colunas que considerei que não fossem impactantes na previsibilidade de preço dos imóveis, além de que tal exclusão de colunas ajuda na redução de dimensionalidade, e isto ajuda na velocidade de processamento de treino do modelo:
 
@@ -469,4 +469,113 @@ df_12.head(2)
 Por fim, acabei ficando com um dataset de 7 mil linhas e 245 colunas para poder criar, treinar e testar o modelo preditivo de regressão linear.
 
 ## Criação do modelo de machine learning:
+
+Nesta fase, comecei com a separação do dataset entre duas variáveis X e y, em que na variável X tinha todas às variáveis independentes e preditoras que iriam auxiliar na previsão do preço dos imóveis, e na variável y tinha somente a variável dependente que iria ser utilizada para previsões, ou seja, a coluna de preço dos imóveis.
+
+```
+X = df_12.drop('price', axis = 'columns')
+y = df_12.price
+```
+
+Após a separação do dataset em duas variáveis, importei a função train_test_split() para separar os dados de treino e os dados de teste de cada variável X e y:
+
+```
+# Importação da função train_test_split para separarmos o conjunto de dados em dados de treino e dados de teste:
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 10)
+```
+
+Por conseguinte, somente importei o modelo de regressão linear, treinei o modelo com os dados de treino da variável X e y, e por fim obtive a pontuação do quão bom estava o modelo com base nos dados de teste:
+
+```
+# Importação do modelo de regressão linear, junto com a aplicação do método fit para treinarmos os dados de treino 
+# , e por fim aplicação do método score para termos o retorno da acurácia preditiva do modelo treinado:
+
+from sklearn.linear_model import LinearRegression
+lr_clf = LinearRegression()
+lr_clf.fit(X_train, y_train)
+lr_clf.score(X_test, y_test)
+```
+
+O método .score() troxe uma pontuação de 0.84, ou seja, o modelo está razoavelmente bom em realizar previsões sobre o preço dos imóveis.
+
+No entanto, usei validação cruzada e GridSearch como técnicas para testar outros modelos e outros parâmetros, para saber se há modelos melhores do que o de regressão linear e também para saber os melhores parâmetros que poderiam ser implementados no treinamento destes modelos.
+
+```
+# Técnica de validação cruzada para vermos a eficiência preditiva contínua de tal modelo 
+# após determinadas iterações:
+
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import cross_val_score
+
+cv = ShuffleSplit(n_splits = 5, test_size = 0.2, random_state = 0)
+
+cross_val_score(LinearRegression(), X, y, cv = cv)
+```
+
+```
+array([0.82430186, 0.77166234, 0.85089567, 0.80837764, 0.83653286])
+```
+
+O código acima realiza uma validação cruzada, isto é, utiliza o modelo de regressão linear para treinar iterativamente o modelo com dados de treino diferentes em cada iteração, e por fim o array acima informa a eficácia preditiva do modelo em cada treinamento.
+
+Em média, com base na validação cruzada feita acima teríamos um modelo com uma eficácia de 0.81, que é menor em comparação a pontuação que conseguímos com o modelo de regressão linear sem qualquer validação cruzada.
+
+Após isto, criei uma função para saber quais são os melhores modelos e quais são os melhores parâmetros dos modelos que poderiam ser implementados para prever com mais precisão o preço dos imóveis:
+
+```
+# Função  de ajustamento de parâmetros para sabermos quais são os modelos mais acurados
+# e quais são os melhores parâmetros para podermos prever os preços dos imóveis de Bangalore:
+
+from sklearn.model_selection import GridSearchCV
+
+from sklearn.linear_model import Lasso
+from sklearn.tree import DecisionTreeRegressor
+
+def find_best_model_using_gridsearchcv(X, y):
+    algos = {
+        'linear_regression': {
+            'model': LinearRegression(),
+            'params': {
+                'normalize': [True, False]
+            }
+        },
+        'lasso': {
+            'model': Lasso(),
+            'params': {
+                'alpha': [1, 2],
+                'selection': ['random', 'cyclic']
+            }
+        },
+        'decision_tree': {
+            'model': DecisionTreeRegressor(),
+            'params': {
+                'criterion': ['mse', 'friedman_mse'],
+                'splitter': ['best', 'random']
+            }
+        }
+    }
+    scores = []
+    cv = ShuffleSplit(n_splits = 5, test_size = 0.2, random_state = 0)
+    for algo_name, config in algos.items():
+        gs = GridSearchCV(config['model'], config['params'], cv = cv, return_train_score = False)
+        gs.fit(X, y)
+        scores.append({
+            'model': algo_name,
+            'best_score': gs.best_score_,
+            'best_params': gs.best_params_
+        })
+        
+    return pd.DataFrame(scores, columns = ['model', 'best_score', 'best_params'])
+```
+
+Com a aplicação da função sobre às variáveis X e y, obtive como resultado:
+
+|   | model             | best_score | best_params                                |
+|---|-------------------|------------|--------------------------------------------|
+| 0 | linear_regression | 0.818354   | {'normalize': True}                        |
+| 1 | lasso             | 0.687429   | {'alpha': 1, 'selection': 'cyclic'}        |
+| 2 | decision_tree     | 0.712945   | {'criterion': 'mse', 'splitter':   'best'} |
 
