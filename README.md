@@ -379,4 +379,94 @@ Por conseguinte, fiz um histograma para visualizar a frequência de imóveis com
 
 Neste gráfico acima é observado que majoritariamente há mais imóveis com 5000 rupees por pés quadrados, enquanto em contrapartida há uma diminuição de imóveis conforme o preço por pés quadrados aumenta.
 
+Consequentemente, também verifiquei às quantidades de banheiros nos imóveis de Bangalore, e vi que há imóveis com mais de 10 banheiros:
+
+|      | location       | size   | total_sqft | bath | price | bhk | price_per_sqft |
+|------|----------------|--------|------------|------|-------|-----|----------------|
+| 5277 | Neeladri Nagar | 10 BHK | 4000.0     | 12.0 | 160.0 | 10  | 4.000.000.000  |
+| 8486 | other          | 10 BHK | 12000.0    | 12.0 | 525.0 | 10  | 4.375.000.000  |
+| 8575 | other          | 16 BHK | 10000.0    | 16.0 | 550.0 | 16  | 5.500.000.000  |
+| 9308 | other          | 11 BHK | 6000.0     | 12.0 | 150.0 | 11  | 2.500.000.000  |
+| 9639 | other          | 13 BHK | 5425.0     | 13.0 | 275.0 | 13  | 5.069.124.424  |
+
+Como complemento à tal informação, decidi plotar um histograma com a frequência de banheiros registrados nos imóveis de tal cidade indiana:
+
+![](./img/gra_5.png)
+
+É vísivel que a maioria dos imóveis em Bangalore contêm somente de 2 à 4 banheiros.
+
+Como é observado na tabela anterior, há imóveis com mais quartos do que banheiros, e provavelmente isto seria um erro de dado ou seria um tipo de outlier, por ser mais comum que haja mais quartos do que banheiros nos imóveis.
+
+Então, decidi excluir todos os imóveis que contêm mais banheiros do que quartos registrados, por considera-los como outliers:
+
+```
+# Exclusão de imóveis que contenham mais banheiros do que quartos presentes: 
+
+df_9 = df_8[df_8.bath < df_8.bhk + 2]
+```
+
+Após tal exclusão de outliers, fiquei com um dataset de 7 mil linhas e 7 colunas.
+
+* **Criação de variável dummy:**
+
+Concluída a fase de exclusão de outliers (valores atípicos), decidi excluir a coluna 'size' e 'price_per_sqft' por não serem colunas úteis para a construção do modelo de regressão:
+
+```
+# Exclusão da coluna 'size' e preço por pés quadrados, por não serem mais colunas que serão úteis para análise
+# e principalmente para construção conseguinte do modelo de aprendizagem maquínica:
+
+df_10 = df_9.drop(['size', 'price_per_sqft'], axis = 'columns')
+```
+
+Pós esse passo, obtive um dataset neste formato:
+
+|   | location            | total_sqft | bath | price | bhk |
+|---|---------------------|------------|------|-------|-----|
+| 0 | 1st Block Jayanagar | 2850.0     | 4.0  | 428.0 | 4   |
+| 1 | 1st Block Jayanagar | 1630.0     | 3.0  | 194.0 | 3   |
+| 2 | 1st Block Jayanagar | 1875.0     | 2.0  | 235.0 | 3   |
+
+Como a coluna 'location' está no formato textual e modelos de machine learning lidam somente com dados numéricos, então terei que converter a coluna 'location' em uma variável dummy de 0's e 1's para cada localização única que terá 0 quando o imóvel não estiver em tal local e que terá 1 quando o imóvel estiver presente em tal local.
+
+```
+# Criação de variáveis dummies para converter a coluna de localização de tipo categórico para tipo numérico
+# , e assim podermos aplicar o modelo de machine learning:
+
+dummies = pd.get_dummies(df_10.location)
+dummies.iloc[:5, :5]
+```
+
+A criação de tal variável dummy gerou um dataset com 242 colunas, que representam todas às localizações únicas que contêm imóveis presentes em Bangalore:
+
+|   | 1st Block   Jayanagar | 1st Phase JP   Nagar | 2nd Phase   Judicial Layout | 2nd Stage   Nagarbhavi | 5th Block Hbr   Layout |
+|---|-----------------------|----------------------|-----------------------------|------------------------|------------------------|
+| 0 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 1 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 2 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 3 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 4 | 1                     | 0                    | 0                           | 0                      | 0                      |
+
+Acima coloquei somente uma amostra de 5 colunas que representam 5 locais em Bangalore que há imóveis localizáveis.
+
+No próximo passo, concatenei o dataset original com o dataset da variável dummy que contêm todas às novas 242 colunas que serão adicionadas ao dataframe original.
+
+```
+# Concatenação do dataset com às novas colunas criadas após a transformação da variável 'location' em uma variável dummy:
+
+df_11 = pd.concat([df_10, dummies.drop('other', axis = 'columns')], axis = 'columns')
+df_11.head()
+```
+
+Depois disto, excluí a coluna 'localization' por tal coluna não ser mais útil para a construção do modelo de machine learning.
+
+```
+# Exclusão da coluna 'location' após termos convertido todos as localizações de tal coluna em variáveis numéricas:
+
+df_12 = df_11.drop('location', axis = 'columns')
+df_12.head(2)
+```
+
+Por fim, acabei ficando com um dataset de 7 mil linhas e 245 colunas para poder criar, treinar e testar o modelo preditivo de regressão linear.
+
+## Criação do modelo de machine learning:
 
