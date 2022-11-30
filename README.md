@@ -579,3 +579,55 @@ Com a aplicação da função sobre às variáveis X e y, obtive como resultado:
 | 1 | lasso             | 0.687429   | {'alpha': 1, 'selection': 'cyclic'}        |
 | 2 | decision_tree     | 0.712945   | {'criterion': 'mse', 'splitter':   'best'} |
 
+Com a tabela acima é constatável que regressão linear é o melhor modelo para prever o preço dos imóveis de Bangalore, então após tal teste, utilizei regressão linear para prever o preço de alguns possíveis imóveis.
+
+Construí uma função que recebesse a localização, a área em pés quadrados, a quantidade de banheiros e de quartos como parâmetros para prever o preço de tais imóveis com tais características dadas nos parâmetros:
+
+```
+# Função criada para prever o preço do imóvel com base na localização, na área total por pés quadrados, e com base na quantidade de banheiros e 
+# de quartos de cada imóvel:
+
+def predict_price(location, sqft, bath, bhk):
+    loc_index = np.where(X.columns == location)[0][0]
+    
+    x = np.zeros(len(X.columns))
+    x[0] = sqft
+    x[1] = bath
+    x[2] = bhk
+    if loc_index >= 0:
+        x[loc_index] = 1
+        
+    return lr_clf.predict([x])[0]
+```
+
+Construída a função para realizar tais previsões o preço dos imóveis, decidi testar tal função:
+
+```
+predict_price('1st Phase JP Nagar', 1000, 2, 2)
+```
+```
+83.49
+```
+Supondo um imóvel localizado em 1st Phase JP Nagar com uma área de 1000 pés quadrados, com 2 quartos e 2 banheiros, nós teriamos previsivelmente um imóvel com um preço aproximado de 83 rupees.
+
+```
+predict_price('1st Phase JP Nagar', 1000, 3, 3)
+```
+```
+86.80
+```
+
+Supondo um imóvel no mesmo local, porém com 3 quartos e 3 banheiros, nós teríamos um imóvel com um preço estimado em 86 rupees.
+
+```
+predict_price('Indira Nagar', 1000, 3, 3)
+```
+```
+184.54
+```
+
+Já se tivéssemos um imóvel localizado em Indira Nagar, mesmo com 1000 pés quadrados e 3 quartos e banheiros, teríamos neste caso um imóvel com um preço estimado em 184 rupees, ou seja, aparentemente isto constata que previsivelmente os imóveis em Indira Nagar são mais caros do que em 1st Phase JP Nagar.
+
+Concluído tal projeto, espero que tal projeto possa ter lhe trazido alguma noção sobre o processo de ciência de dados, de como passamos pelo tratamento e limpeza de dados, até o momento em que implementamos e treinamos o modelo de machine learning para realizar previsões.
+
+## FIM
