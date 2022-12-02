@@ -499,7 +499,7 @@ lr_clf.fit(X_train, y_train)
 lr_clf.score(X_test, y_test)
 ```
 
-O método .score() troxe uma pontuação de 0.84, ou seja, o modelo está razoavelmente bom em realizar previsões sobre o preço dos imóveis.
+O método .score() trouxe uma pontuação de 0.84, ou seja, o modelo está razoavelmente bom em realizar previsões sobre o preço dos imóveis.
 
 No entanto, usei validação cruzada e GridSearch como técnicas para testar outros modelos e outros parâmetros, para saber se há modelos melhores do que o de regressão linear e também para saber os melhores parâmetros que poderiam ser implementados no treinamento destes modelos.
 
@@ -600,7 +600,7 @@ def predict_price(location, sqft, bath, bhk):
     return lr_clf.predict([x])[0]
 ```
 
-Construída a função para realizar tais previsões o preço dos imóveis, decidi testar tal função:
+Construída a função para realizar tais previsões em relação ao preço dos imóveis, decidi testar tal função:
 
 ```
 predict_price('1st Phase JP Nagar', 1000, 2, 2)
