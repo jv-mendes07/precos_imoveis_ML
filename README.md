@@ -7,7 +7,7 @@ Durante o projeto, realizei dois passos sequenciais, que foram **(1)** tratament
 
 Já na **(2)** fase construí um modelo de machine learning, isto é, importei o modelo de regressão linear, dividi o conjunto de dados tratado entre dados de treino e dados de teste, e consequentemente treinei o modelo, para depois ter uma análise do quão eficaz era o modelo em realizar previsões sobre o preço dos imóveis, após isto, repeti este mesmo processo repetidas vezes, assim, usei outros modelos de regressão, junto com algumas técnicas como validação cruzada e GridSearch, para saber quais eram os melhores modelos e quais eram os melhores parâmetros dos modelos para realizar previsões mais precisas e acuradas.
 
-### Importação das bibliotecas:
+## Importação das bibliotecas:
 
 Para este projeto, utilizei Pandas e Numpy para manipulação dos dados, Matplotlib e Seaborn foram usados para visualização de dados, e Sklearn foi a biblioteca útil para a construção do modelo de machine learning.
 
@@ -34,7 +34,7 @@ Após a importação de tais bibliotecas, importei o conjunto de dados e verifiq
 
 Nem todas às colunas do dataset foram usadas para prever o preço dos imóveis, além de que antes de construir o modelo de regressão é necessário converter dados textuais em dados numéricos, e principalmente é indispensável lidar com dados ausentes e outliers para não ter erros na construção do modelo preditivo, à partir deste ponto comecei a fase de tratamento e limpeza de dados:
 
-### Tratamento de dados:
+## Tratamento de dados:
 
 Primeiramente, exclui algumas colunas que considerei que não fossem impactantes na previsibilidade de preço dos imóveis, além de que tal exclusão de colunas ajuda na redução de dimensionalidade, e isto ajuda na velocidade de processamento de treino do modelo:
 
@@ -321,8 +321,313 @@ def plot_scatter_chart(df, location):
     plt.ylabel('Price')
     plt.title(location)
     plt.legend()
-    
-plot_scatter_chart(df_7, 'Rajaji Nagar')
 ```
-Acima é vísivel que criei uma função para plotar gráficos de imóveis de um determinado local que pudesse ser especificado como parâmetro da função, junto com um gráfico de dispersão que expusse o preço dos imóveis de tal local divido por imóveis que contêm 2 e 3 quartos.
+Acima é vísivel que criei uma função para plotar gráficos de imóveis de um determinado local que pudesse ser especificado como parâmetro da função, junto com um gráfico de dispersão que expusesse o preço dos imóveis de tal local que contessem somente 2 e 3 quartos.
 
+Apliquei está função para saber o preço dos imóveis de Rajaji Nagar que contêm 2 ou 3 quartos:
+
+![](./img/gra_1.png)
+
+No gráfico acima, observamos que há alguns imóveis com 2 quartos que são mais caros do que imóveis de 3 quartos.
+
+Apliquei a mesma função para obter um gráfico de dispersão relativo aos imóveis localizados no Hebbal:
+
+![](./img/gra_2.png)
+
+Novamente, é observável que há alguns imóveis de 2 quartos mais caros em comparação à imóveis de 3 quartos.
+
+Após identificar esses dados consideravelmente atípicos, decide excluir os imóveis que contêm 3 quartos e são mais baratos do que imóveis de 2 quartos de todos os locais de Bangalore.
+
+Usei uma função pythônica para a exclusão de tais outliers:
+
+```
+# Função para excluir imóveis que tenham mais quartos e sejam mais baratos do que imóveis com menos quartos e mais caros:
+
+def remove_bhk_outliers(df):
+    exclude_indices = np.array([])
+    for location, location_df in df.groupby('location'):
+        bhk_stats = {}
+        for bhk, bhk_df in location_df.groupby('bhk'):
+            bhk_stats[bhk] = {
+                'mean': np.mean(bhk_df.price_per_sqft),
+                'std': np.std(bhk_df.price_per_sqft),
+                'count': bhk_df.shape[0]
+            }
+        for bhk, bhk_df in location_df.groupby('bhk'):
+            stats = bhk_stats.get(bhk-1)
+            if stats and stats['count']>5:
+                exclude_indices = np.append(exclude_indices, bhk_df[bhk_df.price_per_sqft<(stats['mean'])].index.values)
+    return df.drop(exclude_indices,axis='index')
+
+df_8 = remove_bhk_outliers(df_7)
+df_8.shape
+```
+
+Após aplicar tal função sobre o dataset, obtive um conjunto de dados mais reduzido de 7 mil e 329 linhas.
+
+Concluída a exclusão de outliers, plotei novamente os gráficos para ver o preço dos imóveis de 2 e 3 quartos após a exclusão de tais valores atípicos:
+
+![](./img/gra_3.png)
+
+![](./img/gra_6.png)
+
+Como é observado nos dois gráficos acima, excluí os imóveis de 3 quartos que eram mais baratos do que os imóveis de 2 quartos por considerar tais preços de imóveis como valores incomuns com base na quantidade de cômodos.
+
+Por conseguinte, fiz um histograma para visualizar a frequência de imóveis com base no preço por pés quadrado:
+
+![](./img/gra_4.png)
+
+Neste gráfico acima é observado que majoritariamente há mais imóveis com 5000 rupees por pés quadrados, enquanto em contrapartida há uma diminuição de imóveis conforme o preço por pés quadrados aumenta.
+
+Consequentemente, também verifiquei às quantidades de banheiros nos imóveis de Bangalore, e vi que há imóveis com mais de 10 banheiros:
+
+|      | location       | size   | total_sqft | bath | price | bhk | price_per_sqft |
+|------|----------------|--------|------------|------|-------|-----|----------------|
+| 5277 | Neeladri Nagar | 10 BHK | 4000.0     | 12.0 | 160.0 | 10  | 4.000.000.000  |
+| 8486 | other          | 10 BHK | 12000.0    | 12.0 | 525.0 | 10  | 4.375.000.000  |
+| 8575 | other          | 16 BHK | 10000.0    | 16.0 | 550.0 | 16  | 5.500.000.000  |
+| 9308 | other          | 11 BHK | 6000.0     | 12.0 | 150.0 | 11  | 2.500.000.000  |
+| 9639 | other          | 13 BHK | 5425.0     | 13.0 | 275.0 | 13  | 5.069.124.424  |
+
+Como complemento à tal informação, decidi plotar um histograma com a frequência de banheiros registrados nos imóveis de tal cidade indiana:
+
+![](./img/gra_5.png)
+
+É vísivel que a maioria dos imóveis em Bangalore contêm somente de 2 à 4 banheiros.
+
+Como é observado na tabela anterior, há imóveis com mais quartos do que banheiros, e provavelmente isto seria um erro de dado ou seria um tipo de outlier, por ser mais comum que haja mais quartos do que banheiros nos imóveis.
+
+Então, decidi excluir todos os imóveis que contêm mais banheiros do que quartos registrados, por considera-los como outliers:
+
+```
+# Exclusão de imóveis que contenham mais banheiros do que quartos presentes: 
+
+df_9 = df_8[df_8.bath < df_8.bhk + 2]
+```
+
+Após tal exclusão de outliers, fiquei com um dataset de 7 mil linhas e 7 colunas.
+
+* **Criação de variável dummy:**
+
+Concluída a fase de exclusão de outliers (valores atípicos), decidi excluir a coluna 'size' e 'price_per_sqft' por não serem colunas úteis para a construção do modelo de regressão:
+
+```
+# Exclusão da coluna 'size' e preço por pés quadrados, por não serem mais colunas que serão úteis para análise
+# e principalmente para construção conseguinte do modelo de aprendizagem maquínica:
+
+df_10 = df_9.drop(['size', 'price_per_sqft'], axis = 'columns')
+```
+
+Pós esse passo, obtive um dataset neste formato:
+
+|   | location            | total_sqft | bath | price | bhk |
+|---|---------------------|------------|------|-------|-----|
+| 0 | 1st Block Jayanagar | 2850.0     | 4.0  | 428.0 | 4   |
+| 1 | 1st Block Jayanagar | 1630.0     | 3.0  | 194.0 | 3   |
+| 2 | 1st Block Jayanagar | 1875.0     | 2.0  | 235.0 | 3   |
+
+Como a coluna 'location' está no formato textual e modelos de machine learning lidam somente com dados numéricos, então terei que converter a coluna 'location' em uma variável dummy de 0's e 1's para cada localização única que terá 0 quando o imóvel não estiver em tal local e que terá 1 quando o imóvel estiver presente em tal local.
+
+```
+# Criação de variáveis dummies para converter a coluna de localização de tipo categórico para tipo numérico
+# , e assim podermos aplicar o modelo de machine learning:
+
+dummies = pd.get_dummies(df_10.location)
+dummies.iloc[:5, :5]
+```
+
+A criação de tal variável dummy gerou um dataset com 242 colunas, que representam todas às localizações únicas que contêm imóveis presentes em Bangalore:
+
+|   | 1st Block   Jayanagar | 1st Phase JP   Nagar | 2nd Phase   Judicial Layout | 2nd Stage   Nagarbhavi | 5th Block Hbr   Layout |
+|---|-----------------------|----------------------|-----------------------------|------------------------|------------------------|
+| 0 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 1 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 2 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 3 | 1                     | 0                    | 0                           | 0                      | 0                      |
+| 4 | 1                     | 0                    | 0                           | 0                      | 0                      |
+
+Acima coloquei somente uma amostra de 5 colunas que representam 5 locais em Bangalore que há imóveis localizáveis.
+
+No próximo passo, concatenei o dataset original com o dataset da variável dummy que contêm todas às novas 242 colunas que serão adicionadas ao dataframe original.
+
+```
+# Concatenação do dataset com às novas colunas criadas após a transformação da variável 'location' em uma variável dummy:
+
+df_11 = pd.concat([df_10, dummies.drop('other', axis = 'columns')], axis = 'columns')
+df_11.head()
+```
+
+Depois disto, excluí a coluna 'localization' por tal coluna não ser mais útil para a construção do modelo de machine learning.
+
+```
+# Exclusão da coluna 'location' após termos convertido todos as localizações de tal coluna em variáveis numéricas:
+
+df_12 = df_11.drop('location', axis = 'columns')
+df_12.head(2)
+```
+
+Por fim, acabei ficando com um dataset de 7 mil linhas e 245 colunas para poder criar, treinar e testar o modelo preditivo de regressão linear.
+
+## Criação do modelo de machine learning:
+
+Nesta fase, comecei com a separação do dataset entre duas variáveis X e y, em que na variável X tinha todas às variáveis independentes e preditoras que iriam auxiliar na previsão do preço dos imóveis, e na variável y tinha somente a variável dependente que iria ser utilizada para previsões, ou seja, a coluna de preço dos imóveis.
+
+```
+X = df_12.drop('price', axis = 'columns')
+y = df_12.price
+```
+
+Após a separação do dataset em duas variáveis, importei a função train_test_split() para separar os dados de treino e os dados de teste de cada variável X e y:
+
+```
+# Importação da função train_test_split para separarmos o conjunto de dados em dados de treino e dados de teste:
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 10)
+```
+
+Por conseguinte, somente importei o modelo de regressão linear, treinei o modelo com os dados de treino da variável X e y, e por fim obtive a pontuação do quão bom estava o modelo com base nos dados de teste:
+
+```
+# Importação do modelo de regressão linear, junto com a aplicação do método fit para treinarmos os dados de treino 
+# , e por fim aplicação do método score para termos o retorno da acurácia preditiva do modelo treinado:
+
+from sklearn.linear_model import LinearRegression
+lr_clf = LinearRegression()
+lr_clf.fit(X_train, y_train)
+lr_clf.score(X_test, y_test)
+```
+
+O método .score() trouxe uma pontuação de 0.84, ou seja, o modelo está razoavelmente bom em realizar previsões sobre o preço dos imóveis.
+
+No entanto, usei validação cruzada e GridSearch como técnicas para testar outros modelos e outros parâmetros, para saber se há modelos melhores do que o de regressão linear e também para saber os melhores parâmetros que poderiam ser implementados no treinamento destes modelos.
+
+```
+# Técnica de validação cruzada para vermos a eficiência preditiva contínua de tal modelo 
+# após determinadas iterações:
+
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import cross_val_score
+
+cv = ShuffleSplit(n_splits = 5, test_size = 0.2, random_state = 0)
+
+cross_val_score(LinearRegression(), X, y, cv = cv)
+```
+
+```
+array([0.82430186, 0.77166234, 0.85089567, 0.80837764, 0.83653286])
+```
+
+O código acima realiza uma validação cruzada, isto é, utiliza o modelo de regressão linear para treinar iterativamente o modelo com dados de treino diferentes em cada iteração, e por fim o array acima informa a eficácia preditiva do modelo em cada treinamento.
+
+Em média, com base na validação cruzada feita acima teríamos um modelo com uma eficácia de 0.81, que é menor em comparação a pontuação que conseguímos com o modelo de regressão linear sem qualquer validação cruzada.
+
+Após isto, criei uma função para saber quais são os melhores modelos e quais são os melhores parâmetros dos modelos que poderiam ser implementados para prever com mais precisão o preço dos imóveis:
+
+```
+# Função  de ajustamento de parâmetros para sabermos quais são os modelos mais acurados
+# e quais são os melhores parâmetros para podermos prever os preços dos imóveis de Bangalore:
+
+from sklearn.model_selection import GridSearchCV
+
+from sklearn.linear_model import Lasso
+from sklearn.tree import DecisionTreeRegressor
+
+def find_best_model_using_gridsearchcv(X, y):
+    algos = {
+        'linear_regression': {
+            'model': LinearRegression(),
+            'params': {
+                'normalize': [True, False]
+            }
+        },
+        'lasso': {
+            'model': Lasso(),
+            'params': {
+                'alpha': [1, 2],
+                'selection': ['random', 'cyclic']
+            }
+        },
+        'decision_tree': {
+            'model': DecisionTreeRegressor(),
+            'params': {
+                'criterion': ['mse', 'friedman_mse'],
+                'splitter': ['best', 'random']
+            }
+        }
+    }
+    scores = []
+    cv = ShuffleSplit(n_splits = 5, test_size = 0.2, random_state = 0)
+    for algo_name, config in algos.items():
+        gs = GridSearchCV(config['model'], config['params'], cv = cv, return_train_score = False)
+        gs.fit(X, y)
+        scores.append({
+            'model': algo_name,
+            'best_score': gs.best_score_,
+            'best_params': gs.best_params_
+        })
+        
+    return pd.DataFrame(scores, columns = ['model', 'best_score', 'best_params'])
+```
+
+Com a aplicação da função sobre às variáveis X e y, obtive como resultado:
+
+|   | model             | best_score | best_params                                |
+|---|-------------------|------------|--------------------------------------------|
+| 0 | linear_regression | 0.818354   | {'normalize': True}                        |
+| 1 | lasso             | 0.687429   | {'alpha': 1, 'selection': 'cyclic'}        |
+| 2 | decision_tree     | 0.712945   | {'criterion': 'mse', 'splitter':   'best'} |
+
+Com a tabela acima é constatável que regressão linear é o melhor modelo para prever o preço dos imóveis de Bangalore, então após tal teste, utilizei regressão linear para prever o preço de alguns possíveis imóveis.
+
+Construí uma função que recebesse a localização, a área em pés quadrados, a quantidade de banheiros e de quartos como parâmetros para prever o preço de tais imóveis com tais características dadas nos parâmetros:
+
+```
+# Função criada para prever o preço do imóvel com base na localização, na área total por pés quadrados, e com base na quantidade de banheiros e 
+# de quartos de cada imóvel:
+
+def predict_price(location, sqft, bath, bhk):
+    loc_index = np.where(X.columns == location)[0][0]
+    
+    x = np.zeros(len(X.columns))
+    x[0] = sqft
+    x[1] = bath
+    x[2] = bhk
+    if loc_index >= 0:
+        x[loc_index] = 1
+        
+    return lr_clf.predict([x])[0]
+```
+
+Construída a função para realizar tais previsões em relação ao preço dos imóveis, decidi testar tal função:
+
+```
+predict_price('1st Phase JP Nagar', 1000, 2, 2)
+```
+```
+83.49
+```
+Supondo um imóvel localizado em 1st Phase JP Nagar com uma área de 1000 pés quadrados, com 2 quartos e 2 banheiros, nós teriamos previsivelmente um imóvel com um preço aproximado de 83 rupees.
+
+```
+predict_price('1st Phase JP Nagar', 1000, 3, 3)
+```
+```
+86.80
+```
+
+Supondo um imóvel no mesmo local, porém com 3 quartos e 3 banheiros, nós teríamos um imóvel com um preço estimado em 86 rupees.
+
+```
+predict_price('Indira Nagar', 1000, 3, 3)
+```
+```
+184.54
+```
+
+Já se tivéssemos um imóvel localizado em Indira Nagar, mesmo com 1000 pés quadrados e 3 quartos e banheiros, teríamos neste caso um imóvel com um preço estimado em 184 rupees, ou seja, aparentemente isto constata que previsivelmente os imóveis em Indira Nagar são mais caros do que em 1st Phase JP Nagar.
+
+Concluído tal projeto, espero que tal projeto possa ter lhe trazido alguma noção sobre o processo de ciência de dados, de como passamos pelo tratamento e limpeza de dados, até o momento em que implementamos e treinamos o modelo de machine learning para realizar previsões.
+
+## FIM
